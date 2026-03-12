@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>單擺運動互動動畫</title>
+    <style>
+        body {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 20px;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #e3f2fd 0%, #f5f5f5 100%);
+            min-height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1565c0;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .canvas-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            padding: 20px;
+            position: relative;
+        }
+
+        .animation-section {
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+            justify-content: center;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center;
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            min-width: 200px;
+            margin-bottom: 10px;
+        }
+
+        .control-label {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+        }
+
+        .slider {
+            width: 180px;
+            height: 8px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #1976d2;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #1976d2;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .value-display {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1976d2;
+            background: #e3f2fd;
+            padding: 8px 16px;
+            border-radius: 20px;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .data-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .data-item:last-child {
+            border-bottom: none;
+        }
+
+        .data-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .data-value {
+            font-size: 14px;
+            font-weight: bold;
+            color: #d32f2f;
+        }
+
+        .formula {
+            background: #fff3e0;
+            border: 2px solid #ff9800;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #e65100;
+            margin: 10px 0;
+        }
+
+        .side-panel {
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            width: 100%;
+            max-width: 280px;
+            min-width: 260px;
+        }
+
+        .panel-section {
+            margin-bottom: 15px;
+        }
+
+        .panel-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .panel-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 5px;
+        }
+
+        .energy-bar {
+            margin: 8px 0;
+        }
+
+        .energy-label {
+            font-size: 12px;
+            color: #333;
+            margin-bottom: 3px;
+        }
+
+        .bar-container {
+            width: 100%;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            transition: width 0.1s ease;
+            border-radius: 10px;
+        }
+
+        .kinetic-bar {
+            background: linear-gradient(90deg, #4caf50, #8bc34a);
+        }
+
+        .potential-bar {
+            background: linear-gradient(90deg, #2196f3, #03a9f4);
+        }
+
+        .reset-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
+        }
+
+        .reset-btn:hover {
+            background: #d32f2f;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(244, 67, 54, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .animation-section {
+                flex-direction: column;
+            }
+            
+            .side-panel {
+                max-width: none;
+                min-width: auto;
+            }
+            
+            .controls {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .control-group {
+                min-width: auto;
+                width: 100%;
+            }
+            
+            .slider {
+                width: 100%;
+                max-width: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">單擺運動互動動畫</h1>
+        
+        <div class="formula">
+            週期公式：T = 2π√(L/g)，其中 g = 9.8 m/s²
+        </div>
+
+        <div class="animation-section">
+            <div class="canvas-container">
+                <canvas id="pendulumCanvas" width="450" height="320"></canvas>
+            </div>
+
+            <div class="side-panel">
+                <div class="panel-section">
+                    <div class="panel-title">控制面板</div>
+                    <div class="control-group">
+                        <div class="control-label">擺長 L (公尺)</div>
+                        <input type="range" id="lengthSlider" class="slider" min="0.5" max="3.0" step="0.1" value="1.5">
+                        <div class="value-display" id="lengthValue">1.5 m</div>
+                    </div>
+
+                    <div class="control-group">
+                        <div class="control-label">初始角度 θ₀ (度)</div>
+                        <input type="range" id="angleSlider" class="slider" min="5" max="60" step="1" value="30">
+                        <div class="value-display" id="angleValue">30°</div>
+                    </div>
+
+                    <div class="control-group">
+                        <div class="control-label">控制</div>
+                        <button class="reset-btn" id="resetBtn">重新開始</button>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <div class="panel-title">物理參數</div>
+                    <div class="data-item">
+                        <div class="data-label">當前擺長 (L)</div>
+                        <div class="data-value" id="currentLength">1.5 m</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">初始角度 (θ₀)</div>
+                        <div class="data-value" id="currentAngle">30°</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">當前角度 (θ)</div>
+                        <div class="data-value" id="realTimeAngle">30°</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">理論週期 (T)</div>
+                        <div class="data-value" id="periodValue">2.46 s</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">角速度 (ω)</div>
+                        <div class="data-value" id="angularVelocity">0.0 rad/s</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">重力加速度 (g)</div>
+                        <div class="data-value">9.8 m/s²</div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <div class="panel-title">能量顯示</div>
+                    <div class="data-item">
+                        <div class="data-label">總能量 (E)</div>
+                        <div class="data-value" id="totalEnergy">100%</div>
+                    </div>
+                    <div class="energy-bar">
+                        <div class="energy-label">動能 (KE) - <span id="kineticPercent">0%</span></div>
+                        <div class="bar-container">
+                            <div class="bar-fill kinetic-bar" id="kineticBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="energy-bar">
+                        <div class="energy-label">位能 (PE) - <span id="potentialPercent">100%</span></div>
+                        <div class="bar-container">
+                            <div class="bar-fill potential-bar" id="potentialBar" style="width: 100%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class Pendulum {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.width = canvas.width;
+                this.height = canvas.height;
+                
+                // 物理參數
+                this.g = 9.8; // 重力加速度
+                this.length = 1.5; // 擺長 (公尺)
+                this.angle = Math.PI / 6; // 當前角度 (弧度)
+                this.initialAngle = Math.PI / 6; // 初始角度
+                this.angularVelocity = 0; // 角速度
+                this.damping = 0.999; // 阻尼係數
+                
+                // 顯示參數
+                this.pixelsPerMeter = 120; // 像素/公尺比例
+                this.pivotX = this.width / 2;
+                this.pivotY = 80;
+                this.bobRadius = 15;
+                
+                this.animationId = null;
+                this.startTime = Date.now();
+                
+                this.setupEventListeners();
+                this.updateDisplay();
+                this.animate();
+            }
+            
+            setupEventListeners() {
+                const lengthSlider = document.getElementById('lengthSlider');
+                const angleSlider = document.getElementById('angleSlider');
+                const resetBtn = document.getElementById('resetBtn');
+                
+                lengthSlider.addEventListener('input', (e) => {
+                    this.length = parseFloat(e.target.value);
+                    this.reset();
+                });
+                
+                angleSlider.addEventListener('input', (e) => {
+                    const degrees = parseFloat(e.target.value);
+                    this.initialAngle = degrees * Math.PI / 180;
+                    this.reset();
+                });
+                
+                resetBtn.addEventListener('click', () => {
+                    this.reset();
+                });
+            }
+            
+            reset() {
+                this.angle = this.initialAngle;
+                this.angularVelocity = 0;
+                this.startTime = Date.now();
+                this.updateDisplay();
+            }
+            
+            updateDisplay() {
+                const lengthValue = document.getElementById('lengthValue');
+                const angleValue = document.getElementById('angleValue');
+                const currentLength = document.getElementById('currentLength');
+                const currentAngle = document.getElementById('currentAngle');
+                const periodValue = document.getElementById('periodValue');
+                
+                const degrees = this.initialAngle * 180 / Math.PI;
+                const period = 2 * Math.PI * Math.sqrt(this.length / this.g);
+                
+                lengthValue.textContent = `${this.length.toFixed(1)} m`;
+                angleValue.textContent = `${Math.round(degrees)}°`;
+                currentLength.textContent = `${this.length.toFixed(1)} m`;
+                currentAngle.textContent = `${Math.round(degrees)}°`;
+                periodValue.textContent = `${period.toFixed(2)} s`;
+                
+                // 更新滑桿值
+                document.getElementById('lengthSlider').value = this.length;
+                document.getElementById('angleSlider').value = Math.round(degrees);
+            }
+            
+            updatePhysics() {
+                // 簡單擺動方程式：d²θ/dt² = -(g/L) * sin(θ)
+                const angularAcceleration = -(this.g / this.length) * Math.sin(this.angle);
+                this.angularVelocity += angularAcceleration * 0.016; // 假設 60fps
+                this.angularVelocity *= this.damping; // 阻尼效果
+                this.angle += this.angularVelocity * 0.016;
+            }
+            
+            updateEnergyDisplay() {
+                // 計算能量
+                const height = this.length * (1 - Math.cos(this.angle));
+                const maxHeight = this.length * (1 - Math.cos(this.initialAngle));
+                
+                const potentialEnergy = height / maxHeight;
+                const kineticEnergy = Math.max(0, 1 - potentialEnergy);
+                
+                const kineticBar = document.getElementById('kineticBar');
+                const potentialBar = document.getElementById('potentialBar');
+                const kineticPercent = document.getElementById('kineticPercent');
+                const potentialPercent = document.getElementById('potentialPercent');
+                const totalEnergy = document.getElementById('totalEnergy');
+                
+                const kineticPercentValue = Math.max(0, kineticEnergy * 100);
+                const potentialPercentValue = Math.max(0, potentialEnergy * 100);
+                const totalEnergyValue = kineticPercentValue + potentialPercentValue;
+                
+                kineticBar.style.width = `${kineticPercentValue}%`;
+                potentialBar.style.width = `${potentialPercentValue}%`;
+                kineticPercent.textContent = `${kineticPercentValue.toFixed(1)}%`;
+                potentialPercent.textContent = `${potentialPercentValue.toFixed(1)}%`;
+                totalEnergy.textContent = `${totalEnergyValue.toFixed(1)}%`;
+            }
+            
+            draw() {
+                // 清除畫布
+                this.ctx.clearRect(0, 0, this.width, this.height);
+                
+                // 計算擺錘位置
+                const bobX = this.pivotX + Math.sin(this.angle) * this.length * this.pixelsPerMeter;
+                const bobY = this.pivotY + Math.cos(this.angle) * this.length * this.pixelsPerMeter;
+                
+                // 繪製背景網格
+                this.drawGrid();
+                
+                // 繪製固定點
+                this.ctx.fillStyle = '#333';
+                this.ctx.beginPath();
+                this.ctx.arc(this.pivotX, this.pivotY, 8, 0, 2 * Math.PI);
+                this.ctx.fill();
+                
+                // 繪製擺線
+                this.ctx.strokeStyle = '#333';
+                this.ctx.lineWidth = 3;
+                this.ctx.beginPath();
+                this.ctx.moveTo(this.pivotX, this.pivotY);
+                this.ctx.lineTo(bobX, bobY);
+                this.ctx.stroke();
+                
+                // 繪製擺錘
+                this.ctx.fillStyle = '#f44336';
+                this.ctx.strokeStyle = '#d32f2f';
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.arc(bobX, bobY, this.bobRadius, 0, 2 * Math.PI);
+                this.ctx.fill();
+                this.ctx.stroke();
+                
+                // 繪製擺錘陰影
+                this.ctx.fillStyle = 'rgba(0,0,0,0.2)';
+                this.ctx.beginPath();
+                this.ctx.arc(bobX + 3, bobY + 3, this.bobRadius, 0, 2 * Math.PI);
+                this.ctx.fill();
+                
+                // 繪製角度弧線
+                this.drawAngleArc();
+                
+                // 更新即時角度顯示
+                const realTimeAngle = document.getElementById('realTimeAngle');
+                const angularVelocityDisplay = document.getElementById('angularVelocity');
+                realTimeAngle.textContent = `${Math.abs(this.angle * 180 / Math.PI).toFixed(1)}°`;
+                angularVelocityDisplay.textContent = `${this.angularVelocity.toFixed(2)} rad/s`;
+            }
+            
+            drawGrid() {
+                this.ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+                this.ctx.lineWidth = 1;
+                
+                // 垂直線
+                for (let x = 0; x <= this.width; x += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, 0);
+                    this.ctx.lineTo(x, this.height);
+                    this.ctx.stroke();
+                }
+                
+                // 水平線
+                for (let y = 0; y <= this.height; y += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, y);
+                    this.ctx.lineTo(this.width, y);
+                    this.ctx.stroke();
+                }
+                
+                // 中央垂直線
+                this.ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+                this.ctx.lineWidth = 2;
+                this.ctx.setLineDash([5, 5]);
+                this.ctx.beginPath();
+                this.ctx.moveTo(this.pivotX, this.pivotY);
+                this.ctx.lineTo(this.pivotX, this.height);
+                this.ctx.stroke();
+                this.ctx.setLineDash([]);
+            }
+            
+            drawAngleArc() {
+                const arcRadius = 40;
+                this.ctx.strokeStyle = '#2196f3';
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.arc(this.pivotX, this.pivotY, arcRadius, 0, Math.abs(this.angle));
+                this.ctx.stroke();
+                
+                // 角度標記
+                this.ctx.fillStyle = '#2196f3';
+                this.ctx.font = '14px Arial';
+                this.ctx.textAlign = 'center';
+                const textX = this.pivotX + Math.sin(this.angle / 2) * (arcRadius + 20);
+                const textY = this.pivotY + Math.cos(this.angle / 2) * (arcRadius + 20);
+                this.ctx.fillText(`${Math.abs(this.angle * 180 / Math.PI).toFixed(1)}°`, textX, textY);
+            }
+            
+            animate() {
+                this.updatePhysics();
+                this.updateEnergyDisplay();
+                this.draw();
+                
+                this.animationId = requestAnimationFrame(() => this.animate());
+            }
+            
+            destroy() {
+                if (this.animationId) {
+                    cancelAnimationFrame(this.animationId);
+                }
+            }
+        }
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('pendulumCanvas');
+            const pendulum = new Pendulum(canvas);
+            
+            // 響應式調整
+            function resizeCanvas() {
+                const container = canvas.parentElement;
+                const maxWidth = Math.min(container.clientWidth - 40, 500);
+                const maxHeight = Math.min(window.innerHeight * 0.4, 350);
+                
+                canvas.width = maxWidth;
+                canvas.height = maxHeight;
+                
+                pendulum.width = maxWidth;
+                pendulum.height = maxHeight;
+                pendulum.pivotX = maxWidth / 2;
+            }
+            
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98bae085f6c74a69',t:'MTc1OTk4MTQ0MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
